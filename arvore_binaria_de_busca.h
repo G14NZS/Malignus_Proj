@@ -20,16 +20,35 @@ typedef struct
     void (*mostra) (Elemento x);
 } Arvore_binaria_de_busca;
 
-void unsigned int qtos_elementos_comuns (Arvore_binaria_de_busca* a, Arvore_binaria_de_busca* b);
+// --- Protótipos das Funções ---
+
+// Retorna a quantidade de elementos presentes em ambas as árvores
+unsigned int qtos_elementos_comuns (Arvore_binaria_de_busca* a, Arvore_binaria_de_busca* b);
+
+// Inicializa a estrutura da árvore
 void nova_arvore_binaria_de_busca (Arvore_binaria_de_busca* a, int (*c) (Elemento x, Elemento y), void (*m) (Elemento x));
+
+// Insere um elemento na árvore. Retorna false se o elemento já existir
 boolean guarde_na_arvore_binaria_de_busca (Arvore_binaria_de_busca* a, Elemento i);
-boolean tem_na_arvore_binaria_de_busca (Arvore_binaria_de_busca* a, Elemento i); // nao precisava passar a arvore por referencia; foi só pão-durismo
-unsigned int quantas_info_tem_na_arvore_binaria_de_busca (Arvore_binaria_de_busca* a); // nao precisava passar a arvore por referencia; foi só pão-durismo
-void boolean print_pre_ordem (Arvore_binaria_de_busca* a); // nao precisava passar a arvore por referencia; foi só pão-durismo
-void boolean print_in_ordem (Arvore_binaria_de_busca* a); // nao precisava passar a arvore por referencia; foi só pão-durismo
-void boolean print_pos_ordem (Arvore_binaria_de_busca* a); // nao precisava passar a arvore por referencia; foi só pão-durismo
+
+// Verifica se um elemento existe na árvore
+boolean tem_na_arvore_binaria_de_busca (Arvore_binaria_de_busca* a, Elemento i);
+
+// Retorna o total de nós da árvore
+unsigned int quantas_info_tem_na_arvore_binaria_de_busca (Arvore_binaria_de_busca* a);
+
+// Funções de percurso e exibição (Retorno alterado para void)
+void print_pre_ordem (Arvore_binaria_de_busca* a);
+void print_in_ordem (Arvore_binaria_de_busca* a);
+void print_pos_ordem (Arvore_binaria_de_busca* a);
+
+// Remove um elemento específico
 boolean remova_da_arvore_binaria_de_busca (Arvore_binaria_de_busca* a, Elemento i);
+
+// Reorganiza a árvore para que fique balanceada
 void balanceie_a_arvore_binaria_de_busca (Arvore_binaria_de_busca* a);
+
+// Libera toda a memória alocada pela árvore
 void free_arvore_binaria_de_busca (Arvore_binaria_de_busca* a);
 
 #endif // ARVORE_BINARIA_DE_BUSCA
