@@ -1,53 +1,52 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
-#include "codigo.h"
+#include "basics.h"
+#include "fila.h"
 
-int main ()
-{
-    Codigo c;
-    char* txt;
+typedef struct {
+  char caractere;
+  int frequencia;
+} no;
 
-    novo_codigo(&c);
+int main() {
+    char texto[200];
+    int frequencia[256] = {0}; 
+    no n[256]; // Um array de 256 structs do tipo 'no'
+    int total_nos = 0;
+    Fila fil;
+    nova_fila(&fil,256);
 
-    // adiciona 1, 0, 1
-    adiciona_bit(&c, 1);
-    adiciona_bit(&c, 0);
-    adiciona_bit(&c, 1);
-    txt = toString(c);
-    printf("apos 1,0,1: \"%s\"\n", txt);
-    free(txt);
 
-    // adiciona mais: 1, 1, 0, 0, 1 (total 8 bits, byte cheio)
-    adiciona_bit(&c, 1);
-    adiciona_bit(&c, 1);
-    adiciona_bit(&c, 0);
-    adiciona_bit(&c, 0);
-    adiciona_bit(&c, 1);
-    txt = toString(c);
-    printf("apos 1,1,0,0,1: \"%s\"\n", txt);
-    free(txt);
+    printf("Digite uma frase: ");
+    fgets(texto, sizeof(texto), stdin);
 
-    // adiciona mais 3 bits, passando para o segundo byte
-    adiciona_bit(&c, 0);
-    adiciona_bit(&c, 1);
-    adiciona_bit(&c, 1);
-    txt = toString(c);
-    printf("apos 0,1,1: \"%s\"\n", txt);
-    free(txt);
+    for (int i = 0; texto[i] != '\0'; i++) {
+        unsigned char caractere = (unsigned char)texto[i];
+        frequencia[caractere]++;
+    }
 
-    // remove 2 bits do topo
-    joga_fora_bit(&c);
-    joga_fora_bit(&c);
-    txt = toString(c);
-    printf("apos 2 joga_fora_bit: \"%s\"\n", txt);
-    free(txt);
-
-    // remove ate esvaziar o segundo byte (volta a 8 bits)
-    joga_fora_bit(&c);
-    txt = toString(c);
-    printf("apos mais 1 joga_fora_bit (8 bits): \"%s\"\n", txt);
-    free(txt);
-
-    free_codigo(&c);
+    for (int i = 0; i < 256; i++) {
+        if (frequencia[i] > 0 && i > 31) {
+            printf("'%c': %d vezes\n", i, frequencia[i]);
+        
+        // Agora acessamos o índice 'total_nos' do array de structs
+            n[total_nos].caractere = (char)i;
+            n[total_nos].frequencia = frequencia[i];
+            total_nos++;
+        }
+    }
+    for (int i = 0; i<256; i++){
+        int verificação = n[i].frequencia
+        for (int j = i; j<256; j++){
+            if (verificação<n[j].frequencia)
+                verificação = n[j].frequencia
+        
+        
+        guarde_na_fila(&fil, (ElementoDeFila)&n[total_nos]);
+    
+        
+    }
+    
     return 0;
 }
