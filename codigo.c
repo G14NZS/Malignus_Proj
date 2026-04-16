@@ -74,7 +74,7 @@ boolean pega_byte (Codigo c /* por valor "*/,
 {
 	if (qual>c.capacidade/8) return false;
 	
-	*b=c[qual];
+	*b=c.byte[qual];
 	return true;
 }
 
