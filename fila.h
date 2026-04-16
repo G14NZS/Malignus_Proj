@@ -1,7 +1,7 @@
 #ifndef FILA
 #define FILA
 
-#include "basics.h"
+#include "meustiposonlinegdb.h"
 
 typedef void* ElementoDeFila;
 
