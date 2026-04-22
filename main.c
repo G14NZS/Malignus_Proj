@@ -14,6 +14,7 @@ int main() {
  
     printf("Digite o texto: ");
     fgets(texto, sizeof(texto), stdin);
+    texto[strcspn(texto, "\n")] = '\0';
  
     // 1. Contar frequencia
     for (int i = 0; texto[i] != '\0'; i++) {
