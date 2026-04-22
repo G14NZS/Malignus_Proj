@@ -12,8 +12,8 @@ int main() {
  
     nova_fila(&fil, 256);
  
-    strcpy(texto, "Eerie eyes seen over lake.");
-    printf("Texto: %s\n\n", texto);
+    printf("Digite o texto: ");
+    fgets(texto, sizeof(texto), stdin);
  
     // 1. Contar frequencia
     for (int i = 0; texto[i] != '\0'; i++) {
