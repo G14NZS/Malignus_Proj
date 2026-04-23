@@ -26,10 +26,10 @@ int main(void) {
     char nome_entrada[512];
     char nome_saida[512];
 
-    printf("=== Compactador Huffman (.ruff) ===\n");
+    printf("=== Compactador Huffman ===\n");
     printf("Escolha uma opcao:\n");
     printf("  1 - Compactar arquivo\n");
-    printf("  2 - Descompactar .ruff\n");
+    printf("  2 - Descompactar .huff\n");
     printf("  0 - Sair\n");
     printf("Opcao: ");
     if (fgets(opcao, sizeof(opcao), stdin) == NULL) return 0;
@@ -40,7 +40,7 @@ int main(void) {
         if (fgets(nome_entrada, sizeof(nome_entrada), stdin) == NULL) return 1;
         chomp(nome_entrada);
 
-        printf("Arquivo de saida (ex: saida.ruff): ");
+        printf("Arquivo de saida: ");
         if (fgets(nome_saida, sizeof(nome_saida), stdin) == NULL) return 1;
         chomp(nome_saida);
 
@@ -59,7 +59,7 @@ int main(void) {
         }
 
     } else if (strcmp(opcao, "2") == 0) {
-        printf("Arquivo .ruff de entrada: ");
+        printf("Arquivo .huff de entrada: ");
         if (fgets(nome_entrada, sizeof(nome_entrada), stdin) == NULL) return 1;
         chomp(nome_entrada);
 
