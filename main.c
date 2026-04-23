@@ -2,108 +2,84 @@
 #include <string.h>
 #include <stdlib.h>
 #include "huffman.h"
- 
-int main() {
-    char texto[200];
-    int frequencia[256] = {0};
-    NoHuffman* nos[256];
-    int total_nos = 0;
-    Fila fil;
- 
-    nova_fila(&fil, 256);
- 
-    strcpy(texto, "Eerie eyes seen over lake.");
-    printf("Texto: %s\n\n", texto);
- 
-    // 1. Contar frequencia
-    for (int i = 0; texto[i] != '\0'; i++) {
-        unsigned char c = (unsigned char)texto[i];
-        frequencia[c]++;
-    }
- 
-    // 2. Criar nos folha
-    for (int i = 0; i < 256; i++) {
-        if (frequencia[i] > 0 && i > 31) {
-            nos[total_nos] = cria_no_folha((char)i, frequencia[i]);
-            total_nos++;
-        }
-    }
- 
-    // 3. Ordenar por frequencia (menor primeiro)
-    for (int i = 0; i < total_nos - 1; i++) {
-        int min_idx = i;
-        for (int j = i + 1; j < total_nos; j++) {
-            if (nos[j]->frequencia < nos[min_idx]->frequencia)
-                min_idx = j;
-        }
-        if (min_idx != i) {
-            NoHuffman* temp = nos[i];
-            nos[i] = nos[min_idx];
-            nos[min_idx] = temp;
-        }
-    }
- 
-    // 4. Enfileirar
-    for (int i = 0; i < total_nos; i++) {
-        guarde_na_fila(&fil, (ElementoDeFila)nos[i]);
-    }
- 
-    // 5. Montar a arvore
-    NoHuffman* raiz = monta_arvore(&fil);
- 
-    // 6. Imprimir a arvore
-    printf("Arvore de Huffman:\n\n");
-    imprime_arvore(raiz, 0);
- 
-    // 7. Gerar codigos
-    Codigo tabela[256];
-    for (int i = 0; i < 256; i++) {
-        tabela[i].byte = NULL;
-        tabela[i].tamanho = 0;
-        tabela[i].capacidade = 0;
-    }
- 
-    Codigo codigo_atual;
-    novo_codigo(&codigo_atual);
-    gera_codigos(raiz, codigo_atual, tabela);
-    free_codigo(&codigo_atual);
- 
-    // 8. Imprimir tabela de codigos
-    printf("\nTabela de codigos:\n");
-    for (int i = 0; i < 256; i++) {
-        if (tabela[i].byte != NULL) {
-            char* str = toString(tabela[i]);
-            printf("'%c': %s\n", (char)i, str);
-            free(str);
-        }
-    }
- 
-    // 9. Compactar o texto
-    Codigo compactado;
-    compacta_texto(texto, tabela, &compactado);
- 
-    char* bits = toString(compactado);
-    printf("\nTexto compactado:\n%s\n", bits);
- 
- 
-  // 10. Descompactar
-    char* descompactado = descompacta_texto(compactado, raiz);
-    printf("\nTexto descompactado: %s\n", descompactado);
 
-    if (strcmp(texto, descompactado) == 0)
-        printf("Descompactacao OK!\n");
-    else
-        printf("ERRO: texto descompactado diferente do original!\n");
-
-    // Limpar
-    free(descompactado);
-    free_codigo(&compactado);
-    for (int i = 0; i < 256; i++) {
-        if (tabela[i].byte != NULL)
-            free_codigo(&tabela[i]);
+/* Remove o \n do final se houver (deixado pelo fgets) */
+static void chomp(char* s) {
+    size_t n = strlen(s);
+    while (n > 0 && (s[n-1] == '\n' || s[n-1] == '\r')) {
+        s[--n] = '\0';
     }
-    free_arvore(raiz);
-    free_fila(&fil);
+}
+
+/* Tenta obter o tamanho de um arquivo. Retorna -1 em caso de erro. */
+static long tamanho_arquivo(const char* nome) {
+    FILE* f = fopen(nome, "rb");
+    if (f == NULL) return -1;
+    fseek(f, 0, SEEK_END);
+    long n = ftell(f);
+    fclose(f);
+    return n;
+}
+
+int main(void) {
+    char opcao[16];
+    char nome_entrada[512];
+    char nome_saida[512];
+
+    printf("=== Compactador Huffman (.ruff) ===\n");
+    printf("Escolha uma opcao:\n");
+    printf("  1 - Compactar arquivo\n");
+    printf("  2 - Descompactar .ruff\n");
+    printf("  0 - Sair\n");
+    printf("Opcao: ");
+    if (fgets(opcao, sizeof(opcao), stdin) == NULL) return 0;
+    chomp(opcao);
+
+    if (strcmp(opcao, "1") == 0) {
+        printf("Arquivo de entrada (caminho do arquivo a compactar): ");
+        if (fgets(nome_entrada, sizeof(nome_entrada), stdin) == NULL) return 1;
+        chomp(nome_entrada);
+
+        printf("Arquivo de saida (ex: saida.ruff): ");
+        if (fgets(nome_saida, sizeof(nome_saida), stdin) == NULL) return 1;
+        chomp(nome_saida);
+
+        if (compacta_arquivo(nome_entrada, nome_saida)) {
+            long orig = tamanho_arquivo(nome_entrada);
+            long comp = tamanho_arquivo(nome_saida);
+            printf("\nOK! Arquivo compactado com sucesso.\n");
+            printf("  Original:    %ld bytes\n", orig);
+            printf("  Compactado:  %ld bytes\n", comp);
+            if (orig > 0)
+                printf("  Razao:       %.2f%% do original\n",
+                       100.0 * (double)comp / (double)orig);
+        } else {
+            printf("\nFalha na compactacao.\n");
+            return 1;
+        }
+
+    } else if (strcmp(opcao, "2") == 0) {
+        printf("Arquivo .ruff de entrada: ");
+        if (fgets(nome_entrada, sizeof(nome_entrada), stdin) == NULL) return 1;
+        chomp(nome_entrada);
+
+        printf("Arquivo de saida (onde gravar o conteudo original): ");
+        if (fgets(nome_saida, sizeof(nome_saida), stdin) == NULL) return 1;
+        chomp(nome_saida);
+
+        if (descompacta_arquivo(nome_entrada, nome_saida)) {
+            printf("\nOK! Arquivo descompactado em '%s'.\n", nome_saida);
+        } else {
+            printf("\nFalha na descompactacao.\n");
+            return 1;
+        }
+
+    } else if (strcmp(opcao, "0") == 0) {
+        return 0;
+    } else {
+        printf("Opcao invalida.\n");
+        return 1;
+    }
 
     return 0;
 }
