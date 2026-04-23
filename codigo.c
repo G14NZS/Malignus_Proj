@@ -1,63 +1,4 @@
-#include "codigo.h"
-#include <stdio.h>
-
-boolean novo_codigo(Codigo* c) {
-    c->byte = (U8*)malloc(1);
-    if (!c->byte) return false;
-
-    c->byte[0] = 0;
-    c->capacidade = 8;
-    c->tamanho = 0;
-    return true;
-}
-
-void free_codigo(Codigo* c) {
-    if (c->byte) free(c->byte);
-    c->byte = NULL;
-}
-
-boolean adiciona_bit(Codigo* c, U8 valor) {
-    if (c->tamanho == c->capacidade) {
-        U64 nova_cap = c->capacidade + 8;
-        U8* novo = realloc(c->byte, nova_cap / 8);
-        if (!novo) return false;
-
-        novo[nova_cap/8 - 1] = 0;
-        c->byte = novo;
-        c->capacidade = nova_cap;
-    }
-
-    U64 byte_index = c->tamanho / 8;
-    U8 bit_index = 7 - (c->tamanho % 8);
-
-    if (valor)
-        c->byte[byte_index] |= (1 << bit_index);
-
-    c->tamanho++;
-    return true;
-}
-
-char* toString(Codigo c) {
-    char* str = malloc(c.tamanho + 1);
-    for (U64 i = 0; i < c.tamanho; i++) {
-        U64 byte_index = i / 8;
-        U8 bit_index = 7 - (i % 8);
-        str[i] = ((c.byte[byte_index] >> bit_index) & 1) ? '1' : '0';
-    }
-    str[c.tamanho] = '\0';
-    return str;
-}
-
-boolean clone(Codigo original, Codigo* copia) {
-    novo_codigo(copia);
-    for (U64 i = 0; i < original.tamanho; i++) {
-        U64 byte_index = i / 8;
-        U8 bit_index = 7 - (i % 8);
-        U8 bit = (original.byte[byte_index] >> bit_index) & 1;
-        adiciona_bit(copia, bit);
-    }
-    return true;
-}#include <stdlib.h>
+#include <stdlib.h>
 #include "codigo.h"
 
 boolean novo_codigo (Codigo* c /* por referência */)
@@ -123,7 +64,7 @@ boolean joga_fora_bit (Codigo* c /* por referência */)
 
         c->capacidade-=8;
     }
-    
+
     return true;
 }
 
@@ -132,7 +73,8 @@ boolean pega_byte (Codigo c /* por valor "*/,
                    U8* b /*por referencia */)
 {
 	if (qual>c.capacidade/8) return false;
-	
+
+	*b=c[qual];
 	*b=c.byte[qual];
 	return true;
 }
