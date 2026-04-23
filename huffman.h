@@ -1,19 +1,24 @@
 #ifndef HUFFMAN
 #define HUFFMAN
 
+#include "meustiposonlinegdb.h"
+#include "fila.h"
 #include "codigo.h"
 
-typedef struct no {
-    unsigned char c;
-    int freq;
-    struct no *esq, *dir;
-} No;
+typedef struct no_huffman {
+    char caractere;
+    int frequencia;
+    struct no_huffman *esquerda;
+    struct no_huffman *direita;
+} NoHuffman;
 
-No* cria_no(unsigned char c, int f);
-No* monta_arvore(No** lista, int n);
-void gera_codigos(No* raiz, Codigo atual, Codigo tabela[256]);
+NoHuffman* cria_no_folha(char c, int freq);
+NoHuffman* cria_no_interno(NoHuffman* esq, NoHuffman* dir);
+NoHuffman* monta_arvore(Fila* fil);
+void imprime_arvore(NoHuffman* raiz, int nivel);
+void free_arvore(NoHuffman* raiz);
+void gera_codigos(NoHuffman* raiz, Codigo atual, Codigo tabela[256]);
 boolean compacta_texto(char* texto, Codigo tabela[256], Codigo* saida);
-char* descompacta(Codigo c, No* raiz);
-void free_arvore(No* r);
+char* descompacta_texto(Codigo compactado, NoHuffman* raiz);
 
 #endif
