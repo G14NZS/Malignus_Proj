@@ -3,7 +3,7 @@
 #include <string.h>
 #include "huffman.h"
 
-#define RUFF_MAGIC "RUFF"
+#define RUFF_MAGIC "HUFF"
 #define RUFF_MAGIC_LEN 4
 
 NoHuffman* cria_no_folha(char c, int freq) {
@@ -257,7 +257,7 @@ static void libera_tabela(Codigo tabela[256]) {
 boolean compacta_arquivo(const char* nome_entrada, const char* nome_saida) {
     FILE* fin = fopen(nome_entrada, "rb");
     if (fin == NULL) {
-        printf("Erro: nao foi possivel abrir '%s' para leitura.\n", nome_entrada);
+        printf("Erro: '%s' nao e um arquivo .huff valido.\n", nome_entrada);
         return false;
     }
 
