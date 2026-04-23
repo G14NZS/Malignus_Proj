@@ -1,101 +1,165 @@
-#include "huffman.h"
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
+#include "huffman.h"
 
-No* cria_no(unsigned char c, int f) {
-    No* n = malloc(sizeof(No));
-    n->c = c;
-    n->freq = f;
-    n->esq = n->dir = NULL;
-    return n;
+NoHuffman* cria_no_folha(char c, int freq) {
+    NoHuffman* novo = (NoHuffman*)malloc(sizeof(NoHuffman));
+    if (novo == NULL) return NULL;
+    novo->caractere = c;
+    novo->frequencia = freq;
+    novo->esquerda = NULL;
+    novo->direita = NULL;
+    return novo;
 }
 
-int compara(const void* a, const void* b) {
-    return (*(No**)a)->freq - (*(No**)b)->freq;
+NoHuffman* cria_no_interno(NoHuffman* esq, NoHuffman* dir) {
+    NoHuffman* novo = (NoHuffman*)malloc(sizeof(NoHuffman));
+    if (novo == NULL) return NULL;
+    novo->caractere = '\0';
+    novo->frequencia = esq->frequencia + dir->frequencia;
+    novo->esquerda = esq;
+    novo->direita = dir;
+    return novo;
 }
 
-No* monta_arvore(No** lista, int n) {
-    while (n > 1) {
-        qsort(lista, n, sizeof(No*), compara);
+void insere_ordenado(Fila* fil, NoHuffman* novo) {
+    int tam = 0;
+    NoHuffman* temp[256];
 
-        No* esq = lista[0];
-        No* dir = lista[1];
-
-        No* pai = cria_no(0, esq->freq + dir->freq);
-        pai->esq = esq;
-        pai->dir = dir;
-
-        lista[0] = pai;
-        lista[1] = lista[n-1];
-        n--;
+    // Esvazia a fila inteira para o array
+    while (!fila_vazia(*fil)) {
+        NoHuffman* atual;
+        recupere_da_fila(*fil, (ElementoDeFila*)&atual);
+        remova_elemento_da_fila(fil);
+        temp[tam++] = atual;
     }
-    return lista[0];
+
+    // Reinsere tudo, colocando o novo na posição certa
+    int inserido = 0;
+    for (int i = 0; i < tam; i++) {
+        if (!inserido && novo->frequencia <= temp[i]->frequencia) {
+            guarde_na_fila(fil, (ElementoDeFila)novo);
+            inserido = 1;
+        }
+        guarde_na_fila(fil, (ElementoDeFila)temp[i]);
+    }
+    // Se o novo é o maior de todos, vai no final
+    if (!inserido) {
+        guarde_na_fila(fil, (ElementoDeFila)novo);
+    }
 }
 
-void gera_codigos(No* raiz, Codigo atual, Codigo tabela[256]) {
-    if (!raiz) return;
+NoHuffman* monta_arvore(Fila* fil) {
+    while (1) {
+        // Tira o menor
+        NoHuffman* esq;
+        recupere_da_fila(*fil, (ElementoDeFila*)&esq);
+        remova_elemento_da_fila(fil);
 
-    if (!raiz->esq && !raiz->dir) {
-        if (atual.tamanho == 0)
-            adiciona_bit(&atual, 0);
+        // Se a fila esvaziou, esse é a raiz
+        if (fila_vazia(*fil)) {
+            return esq;
+        }
 
-        clone(atual, &tabela[raiz->c]);
+        // Tira o segundo menor
+        NoHuffman* dir;
+        recupere_da_fila(*fil, (ElementoDeFila*)&dir);
+        remova_elemento_da_fila(fil);
+
+        // Junta os dois num nó pai
+        NoHuffman* pai = cria_no_interno(esq, dir);
+
+        // Reinsere na posição correta
+        insere_ordenado(fil, pai);
+    }
+}
+
+void imprime_arvore(NoHuffman* raiz, int nivel) {
+    if (raiz == NULL) return;
+    imprime_arvore(raiz->direita, nivel + 1);
+    for (int i = 0; i < nivel; i++) printf("    ");
+    if (raiz->caractere != '\0')
+        printf("[%c:%d]\n", raiz->caractere, raiz->frequencia);
+    else
+        printf("(%d)\n", raiz->frequencia);
+    imprime_arvore(raiz->esquerda, nivel + 1);
+}
+
+void free_arvore(NoHuffman* raiz) {
+    if (raiz == NULL) return;
+    free_arvore(raiz->esquerda);
+    free_arvore(raiz->direita);
+    free(raiz);
+}
+
+void gera_codigos(NoHuffman* raiz, Codigo atual, Codigo tabela[256]) {
+    if (raiz == NULL) return;
+ 
+    // É folha? Salva o código na tabela
+    if (raiz->esquerda == NULL && raiz->direita == NULL) {
+        unsigned char idx = (unsigned char)raiz->caractere;
+        clone(atual, &tabela[idx]);
         return;
     }
-
+ 
+    // Vai para esquerda: adiciona bit 0
     adiciona_bit(&atual, 0);
-    gera_codigos(raiz->esq, atual, tabela);
-    
-    atual.tamanho--;
-    
+    gera_codigos(raiz->esquerda, atual, tabela);
+    joga_fora_bit(&atual);
+ 
+    // Vai para direita: adiciona bit 1
     adiciona_bit(&atual, 1);
-    gera_codigos(raiz->dir, atual, tabela);
-    
-    atual.tamanho--;
+    gera_codigos(raiz->direita, atual, tabela);
+    joga_fora_bit(&atual);
 }
 
 boolean compacta_texto(char* texto, Codigo tabela[256], Codigo* saida) {
     novo_codigo(saida);
-
-    for (int i = 0; texto[i]; i++) {
-        Codigo cod = tabela[(unsigned char)texto[i]];
-
-        for (U64 j = 0; j < cod.tamanho; j++) {
-            U64 b = j / 8;
-            U8 bit = 7 - (j % 8);
-            U8 val = (cod.byte[b] >> bit) & 1;
-            adiciona_bit(saida, val);
+    for (int i = 0; texto[i] != '\0'; i++) {
+        unsigned char c = (unsigned char)texto[i];
+        if (tabela[c].byte == NULL) continue;
+        
+        // Converte o código em string de bits e adiciona cada um
+        char* bits = toString(tabela[c]);
+        for (int j = 0; bits[j] != '\0'; j++) {
+            adiciona_bit(saida, bits[j] == '1' ? 1 : 0);
         }
+        free(bits);
     }
     return true;
 }
 
-char* descompacta(Codigo c, No* raiz) {
-    char* out = malloc(1000);
+char* descompacta_texto(Codigo compactado, NoHuffman* raiz) {
+    // Aloca espaço para o texto descompactado
+    // No pior caso, cada bit é um caractere
+    char* resultado = (char*)malloc((compactado.tamanho + 1) * sizeof(char));
+    if (resultado == NULL) return NULL;
+ 
     int pos = 0;
-
-    No* atual = raiz;
-
-    for (U64 i = 0; i < c.tamanho; i++) {
-        U64 b = i / 8;
-        U8 bit = 7 - (i % 8);
-        U8 val = (c.byte[b] >> bit) & 1;
-
-        atual = val ? atual->dir : atual->esq;
-
-        if (!atual->esq && !atual->dir) {
-            out[pos++] = atual->c;
-            atual = raiz;
+    NoHuffman* atual = raiz;
+ 
+    // Converte os bits para string para facilitar a leitura
+    char* bits = toString(compactado);
+    if (bits == NULL) {
+        free(resultado);
+        return NULL;
+    }
+ 
+    for (U64 i = 0; i < compactado.tamanho; i++) {
+        // 0 = esquerda, 1 = direita
+        if (bits[i] == '0')
+            atual = atual->esquerda;
+        else
+            atual = atual->direita;
+ 
+        // Chegou numa folha = encontrou um caractere
+        if (atual->esquerda == NULL && atual->direita == NULL) {
+            resultado[pos++] = atual->caractere;
+            atual = raiz;  // volta para a raiz
         }
     }
-
-    out[pos] = '\0';
-    return out;
-}
-
-void free_arvore(No* r) {
-    if (!r) return;
-    free_arvore(r->esq);
-    free_arvore(r->dir);
-    free(r);
+ 
+    resultado[pos] = '\0';
+    free(bits);
+    return resultado;
 }
